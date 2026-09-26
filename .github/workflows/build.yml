@@ -1,4 +1,4 @@
-content = """name: Build Pico 2 UF2
+yaml_text = """name: Build Pico 2 UF2
 
 on:
   push:
@@ -43,17 +43,17 @@ jobs:
           API="https://flashmypico.com/v1/api"
           VERSION="run-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
 
-          PROJECT_RESPONSE=$(curl -sS \\
-            -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \\
+          PROJECT_RESPONSE=$(curl -sS \
+            -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \
             "$API/project/$PROJECT")
 
           PROJECT_STATUS=$(echo "$PROJECT_RESPONSE" | jq -r '.status // empty')
 
           if [ "$PROJECT_STATUS" != "ok" ]; then
-            PROJECT_RESPONSE=$(curl -sS -X POST \\
-              -d "title=Pico 2 Display Test" \\
-              -d "device_handle=pico_2" \\
-              -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \\
+            PROJECT_RESPONSE=$(curl -sS -X POST \
+              -d "title=Pico 2 Display Test" \
+              -d "device_handle=pico_2" \
+              -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \
               "$API/project/$PROJECT")
 
             PROJECT_STATUS=$(echo "$PROJECT_RESPONSE" | jq -r '.status // empty')
@@ -64,10 +64,10 @@ jobs:
             fi
           fi
 
-          UPLOAD_RESPONSE=$(curl -sS -X POST \\
-            -F "version=$VERSION" \\
-            -F "file=@build/pico2_display_test.uf2" \\
-            -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \\
+          UPLOAD_RESPONSE=$(curl -sS -X POST \
+            -F "version=$VERSION" \
+            -F "file=@build/pico2_display_test.uf2" \
+            -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \
             "$API/project/$PROJECT/builds")
 
           UPLOAD_STATUS=$(echo "$UPLOAD_RESPONSE" | jq -r '.status // empty')
@@ -86,7 +86,4 @@ jobs:
           path: build/pico2_display_test.uf2
           if-no-files-found: error
 """
-path = "/mnt/data/build.yml"
-with open(path, "w") as f:
-    f.write(content)
-print(path)
+print(yaml_text)
