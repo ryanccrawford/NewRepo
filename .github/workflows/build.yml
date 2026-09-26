@@ -1,4 +1,4 @@
-name: Build Pico 2 UF2
+content = """name: Build Pico 2 UF2
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential jq
 
       - name: Clone Pico SDK
         run: |
@@ -35,9 +35,58 @@ jobs:
         run: |
           test -f build/pico2_display_test.uf2
 
+      - name: Upload UF2 to FlashMyPico
+        env:
+          FLASHMYPICO_API_KEY: ${{ secrets.FLASHMYPICO_API_KEY }}
+        run: |
+          PROJECT="pico2_display_test"
+          API="https://flashmypico.com/v1/api"
+          VERSION="run-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
+
+          PROJECT_RESPONSE=$(curl -sS \\
+            -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \\
+            "$API/project/$PROJECT")
+
+          PROJECT_STATUS=$(echo "$PROJECT_RESPONSE" | jq -r '.status // empty')
+
+          if [ "$PROJECT_STATUS" != "ok" ]; then
+            PROJECT_RESPONSE=$(curl -sS -X POST \\
+              -d "title=Pico 2 Display Test" \\
+              -d "device_handle=pico_2" \\
+              -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \\
+              "$API/project/$PROJECT")
+
+            PROJECT_STATUS=$(echo "$PROJECT_RESPONSE" | jq -r '.status // empty')
+
+            if [ "$PROJECT_STATUS" != "ok" ]; then
+              echo "FlashMyPico project setup failed: $PROJECT_STATUS"
+              exit 1
+            fi
+          fi
+
+          UPLOAD_RESPONSE=$(curl -sS -X POST \\
+            -F "version=$VERSION" \\
+            -F "file=@build/pico2_display_test.uf2" \\
+            -H "Authorization: Bearer $FLASHMYPICO_API_KEY" \\
+            "$API/project/$PROJECT/builds")
+
+          UPLOAD_STATUS=$(echo "$UPLOAD_RESPONSE" | jq -r '.status // empty')
+
+          if [ "$UPLOAD_STATUS" != "ok" ]; then
+            echo "FlashMyPico upload failed: $UPLOAD_STATUS"
+            exit 1
+          fi
+
+          echo "UF2 uploaded to FlashMyPico as $VERSION"
+
       - name: Upload UF2 artifact
         uses: actions/upload-artifact@v4
         with:
           name: pico2-display-test-uf2
           path: build/pico2_display_test.uf2
           if-no-files-found: error
+"""
+path = "/mnt/data/build.yml"
+with open(path, "w") as f:
+    f.write(content)
+print(path)
