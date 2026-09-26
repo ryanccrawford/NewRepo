@@ -1,0 +1,47 @@
+name: Build Pico 2 UF2
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+
+      - name: Clone Pico SDK
+        run: |
+          git clone --depth 1 --branch 2.2.0 https://github.com/raspberrypi/pico-sdk.git "$HOME/pico-sdk"
+          git -C "$HOME/pico-sdk" submodule update --init --recursive
+
+      - name: Configure
+        env:
+          PICO_SDK_PATH: ${{ runner.home }}/pico-sdk
+        run: |
+          cmake -S . -B build -G Ninja -DPICO_BOARD=pico2
+
+      - name: Build
+        env:
+          PICO_SDK_PATH: ${{ runner.home }}/pico-sdk
+        run: |
+          cmake --build build
+
+      - name: Verify UF2 exists
+        run: |
+          test -f build/pico2_display_test.uf2
+
+      - name: Upload UF2 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pico2-display-test-uf2
+          path: build/pico2_display_test.uf2
+          if-no-files-found: error
