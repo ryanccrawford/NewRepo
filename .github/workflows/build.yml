@@ -1,4 +1,4 @@
-yaml_text = """name: Build Pico 2 UF2
+name: Build Pico 2 UF2
 
 on:
   push:
@@ -85,5 +85,3 @@ jobs:
           name: pico2-display-test-uf2
           path: build/pico2_display_test.uf2
           if-no-files-found: error
-"""
-print(yaml_text)
