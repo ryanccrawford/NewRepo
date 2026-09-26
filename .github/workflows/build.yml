@@ -23,6 +23,12 @@ jobs:
           git clone --depth 1 --branch 2.2.0 https://github.com/raspberrypi/pico-sdk.git "$HOME/pico-sdk"
           git -C "$HOME/pico-sdk" submodule update --init --recursive
 
+          # SDK 2.2.0 pins an older TinyUSB commit that predates the
+          # built-in MIDI host API used by this firmware.
+          TINYUSB_REV="5693cc2c8748f4fa667b57c5b5d5314b034540ab"
+          git -C "$HOME/pico-sdk/lib/tinyusb" fetch --depth 1 origin "$TINYUSB_REV"
+          git -C "$HOME/pico-sdk/lib/tinyusb" checkout --detach "$TINYUSB_REV"
+
       - name: Configure
         run: |
           PICO_SDK_PATH="$HOME/pico-sdk" cmake -S . -B build -G Ninja -DPICO_BOARD=pico2
