@@ -24,14 +24,10 @@ jobs:
           git -C "$HOME/pico-sdk" submodule update --init --recursive
 
       - name: Configure
-        env:
-          PICO_SDK_PATH: ${{ runner.home }}/pico-sdk
         run: |
-          cmake -S . -B build -G Ninja -DPICO_BOARD=pico2
+          PICO_SDK_PATH="$HOME/pico-sdk" cmake -S . -B build -G Ninja -DPICO_BOARD=pico2
 
       - name: Build
-        env:
-          PICO_SDK_PATH: ${{ runner.home }}/pico-sdk
         run: |
           cmake --build build
 
